@@ -30,9 +30,9 @@ ENV PORT=8000
 # vLLM exposes an OpenAI-compatible API by default
 EXPOSE 8000
 
-# Run vLLM's OpenAI-compatible server
-CMD python -m vllm.entrypoints.openai.api_server \
-    --model $MODEL \
+# Run vLLM's OpenAI-compatible server using the new 'vllm serve' command
+# The latest vLLM uses 'vllm serve MODEL' instead of python module
+CMD vllm serve $MODEL \
     --max-model-len $MAX_MODEL_LEN \
     --tensor-parallel-size $TENSOR_PARALLEL_SIZE \
     --gpu-memory-utilization $GPU_MEMORY_UTILIZATION \
