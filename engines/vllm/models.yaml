@@ -1,0 +1,74 @@
+# Model Configurations for A100 40GB
+# 
+# These are the three supported models on our platform.
+# All fit comfortably on A100 40GB with room for KV cache.
+
+models:
+  # =============================================================================
+  # MISTRAL 7B (DEFAULT) - Best balance of quality and speed
+  # =============================================================================
+  mistral-7b:
+    name: "mistralai/Mistral-7B-Instruct-v0.3"
+    params: "7B"
+    vram_weights: "~14GB FP16"
+    vram_available_kv: "~22GB"
+    context: 8192
+    strengths:
+      - Excellent instruction following
+      - Sliding window attention (32k effective context)
+      - Fast inference, well-optimized
+    use_case: "General chat, coding, reasoning"
+    license: "Apache 2.0"
+    config:
+      MAX_MODEL_LEN: 8192
+      GPU_MEMORY_UTILIZATION: 0.90
+
+  # =============================================================================
+  # PHI-3 MINI - Fast loading, great for development
+  # =============================================================================
+  phi-3-mini:
+    name: "microsoft/Phi-3-mini-4k-instruct"
+    params: "3.8B"
+    vram_weights: "~8GB FP16"
+    vram_available_kv: "~28GB"
+    context: 4096
+    strengths:
+      - Very fast to load (~30s)
+      - Surprisingly capable for size
+      - Great for testing infrastructure
+    use_case: "Development, testing, quick iteration, coding"
+    license: "MIT"
+    config:
+      MAX_MODEL_LEN: 4096
+      GPU_MEMORY_UTILIZATION: 0.85
+
+  # =============================================================================
+  # GEMMA 2 9B - Strong reasoning capabilities
+  # =============================================================================
+  gemma-2-9b:
+    name: "google/gemma-2-9b-it"
+    params: "9B"
+    vram_weights: "~18GB FP16"
+    vram_available_kv: "~18GB"
+    context: 8192
+    strengths:
+      - Excellent reasoning and analysis
+      - Strong on benchmarks
+      - Good multi-turn conversation
+    use_case: "Complex reasoning, analysis, research"
+    license: "Gemma Terms of Use"
+    config:
+      MAX_MODEL_LEN: 8192
+      GPU_MEMORY_UTILIZATION: 0.90
+
+# =============================================================================
+# VRAM Budget Reference for A100 40GB
+# =============================================================================
+# 
+# | Model      | Weights | KV Available | Max Concurrent (4K ctx) |
+# |------------|---------|--------------|-------------------------|
+# | Phi-3      | 8GB     | 28GB         | ~56 requests            |
+# | Mistral    | 14GB    | 22GB         | ~44 requests            |
+# | Gemma 9B   | 18GB    | 18GB         | ~36 requests            |
+#
+# KV cost: ~0.5MB per token for 7-9B models

@@ -1,0 +1,31 @@
+# Development Stack - No GPU required
+#
+# Use this for local development without a GPU.
+# Gateway runs with echo worker (no real LLM).
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up
+
+services:
+  gateway:
+    build:
+      context: ../../gateway
+      dockerfile: Dockerfile
+    container_name: llm-gateway-dev
+    environment:
+      - WORKER_TYPE=echo
+    volumes:
+      - gateway_logs:/app/logs
+      - ../../gateway/api_keys.json:/app/api_keys.json
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  gateway_logs:
+    name: llm-gateway-logs-dev

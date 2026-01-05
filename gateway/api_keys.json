@@ -1,0 +1,14 @@
+{
+  "sk-dev-default-key-12345": {
+    "key_id": "default",
+    "created_at": "2025-11-17T17:35:39.760667",
+    "rate_limit": 30,
+    "active": true
+  },
+  "sk-ZhwmdU1rk5jXFm0DBZd8sGeGcXCyhpYkIL4CO1zgZsM": {
+    "key_id": "second key",
+    "created_at": "2025-11-17T17:45:25.941307",
+    "rate_limit": 30,
+    "active": true
+  }
+}

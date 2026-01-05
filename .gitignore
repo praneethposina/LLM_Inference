@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+
+# Docker
+docker-compose.override.yml
+
