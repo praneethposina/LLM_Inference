@@ -20,26 +20,29 @@ services:
   # ===========================================================================
   # vLLM - LLM Inference Engine
   # ===========================================================================
-  # Runs the actual model inference with:
-  #   - Continuous batching
-  #   - PagedAttention for efficient KV cache
-  #   - OpenAI-compatible API
+  # Uses the official vLLM OpenAI-compatible image directly
   vllm:
-    build:
-      context: ../../engines/vllm
-      dockerfile: Dockerfile
+    image: vllm/vllm-openai:latest
     container_name: llm-vllm
+    # Override the default command with explicit model and args
+    command:
+      - "--model"
+      - "${MODEL:-mistralai/Mistral-7B-Instruct-v0.3}"
+      - "--max-model-len"
+      - "${MAX_MODEL_LEN:-8192}"
+      - "--tensor-parallel-size"
+      - "1"
+      - "--gpu-memory-utilization"
+      - "0.90"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--trust-remote-code"
     environment:
-      # Model selection - override with MODEL=xxx docker compose up
-      - MODEL=${MODEL:-mistralai/Mistral-7B-Instruct-v0.3}
-      - MAX_MODEL_LEN=${MAX_MODEL_LEN:-8192}
-      - GPU_MEMORY_UTILIZATION=${GPU_MEMORY_UTILIZATION:-0.90}
-      # HuggingFace cache - mount below to persist model downloads
       - HF_HOME=/root/.cache/huggingface
     volumes:
-      # Persist model downloads across container restarts
       - huggingface_cache:/root/.cache/huggingface
-    # GPU access - requires nvidia-container-toolkit
     deploy:
       resources:
         reservations:
@@ -48,7 +51,7 @@ services:
               count: 1
               capabilities: [ gpu ]
     ports:
-      - "8001:8000" # Expose for debugging; gateway uses internal network
+      - "8001:8000"
     networks:
       - llm-network
     healthcheck:
@@ -56,32 +59,22 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 120s # Models take time to load
+      start_period: 180s # Models take time to load
     restart: unless-stopped
 
   # ===========================================================================
   # Gateway - OpenAI-compatible API
   # ===========================================================================
-  # Handles:
-  #   - Authentication (API keys)
-  #   - Rate limiting
-  #   - Request logging
-  #   - Routing to vLLM
   gateway:
     build:
       context: ../../gateway
       dockerfile: Dockerfile
     container_name: llm-gateway
     environment:
-      # Worker configuration
       - WORKER_TYPE=${WORKER_TYPE:-vllm}
       - VLLM_URL=http://vllm:8000
-      # Fallback to echo worker if vLLM not available
-      - ECHO_FALLBACK=${ECHO_FALLBACK:-false}
     volumes:
-      # Persist logs
       - gateway_logs:/app/logs
-      # Mount api_keys for live updates (optional)
       - ../../gateway/api_keys.json:/app/api_keys.json
     ports:
       - "8000:8000"
@@ -98,13 +91,11 @@ services:
       start_period: 5s
     restart: unless-stopped
 
-# Networks
 networks:
   llm-network:
     driver: bridge
     name: llm-inference-network
 
-# Volumes for persistence
 volumes:
   huggingface_cache:
     name: llm-hf-cache

@@ -96,7 +96,7 @@ curl http://localhost:8000/v1/models
 
 # Chat completion (non-streaming)
 curl http://localhost:8000/v1/chat/completions \
-  -H "Authorization: Bearer sk-test-key-1" \
+  -H "Authorization: Bearer sk-dev-default-key-12345" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mistral",
@@ -106,7 +106,7 @@ curl http://localhost:8000/v1/chat/completions \
 
 # Chat completion (streaming)
 curl http://localhost:8000/v1/chat/completions \
-  -H "Authorization: Bearer sk-test-key-1" \
+  -H "Authorization: Bearer sk-dev-default-key-12345" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mistral",
