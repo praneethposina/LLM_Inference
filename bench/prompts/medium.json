@@ -1,0 +1,17 @@
+{
+    "name": "medium",
+    "description": "Medium prompts (~100 tokens) for typical use cases",
+    "prompts": [
+        "Explain machine learning in simple terms that a 10-year-old would understand.",
+        "Write a short poem about the ocean and its waves.",
+        "What are the key differences between Python and JavaScript programming languages?",
+        "Describe the process of photosynthesis step by step.",
+        "What are the benefits and drawbacks of remote work?",
+        "Explain how a neural network learns from data.",
+        "Write a brief product description for a smartwatch.",
+        "What are the main causes of climate change?",
+        "How does the internet work? Explain briefly.",
+        "What makes a good leader? List 5 qualities."
+    ],
+    "max_tokens": 200
+}

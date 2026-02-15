@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from worker_factory import create_worker
 from auth import verify_api_key, list_api_keys, create_api_key, revoke_api_key, revoke_api_key_by_id
 from logger import setup_logger, log_request, log_response, get_usage_stats
+from metrics import get_metrics, RequestMetrics
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -81,6 +82,11 @@ class ChatCompletionResponse(BaseModel):
 async def health():
     """Health check endpoint."""
     return {"status": "healthy"}
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint."""
+    return get_metrics()
 
 @app.get("/v1/models")
 async def list_models():
@@ -180,15 +186,24 @@ async def chat_completions(
             }
         )
     else:
-        response = await _generate_chat_completion(request_id, body, start_time)
-        latency_ms = int((time.time() - start_time) * 1000)
-        log_response(logger, request_id, latency_ms, "success")
-        return response
+        # Non-streaming with metrics
+        req_metrics = RequestMetrics(model=body.model, stream=False)
+        req_metrics.start()
+        try:
+            response = await _generate_chat_completion(request_id, body, start_time, req_metrics)
+            latency_ms = int((time.time() - start_time) * 1000)
+            log_response(logger, request_id, latency_ms, "success")
+            req_metrics.finish("success")
+            return response
+        except Exception as e:
+            req_metrics.finish("error")
+            raise
 
 async def _generate_chat_completion(
     request_id: str,
     body: ChatCompletionRequest,
-    start_time: float
+    start_time: float,
+    req_metrics: RequestMetrics = None
 ) -> ChatCompletionResponse:
     """Generate a non-streaming chat completion."""
     # Get the last user message
@@ -198,8 +213,17 @@ async def _generate_chat_completion(
     
     prompt = user_messages[-1].content
     
-    # Generate response using echo worker
+    # Record prompt tokens
+    prompt_tokens = len(prompt.split())
+    if req_metrics:
+        req_metrics.record_prompt_tokens(prompt_tokens)
+    
+    # Generate response using worker
     full_response = await worker.generate(prompt, max_tokens=body.max_tokens or 100)
+    # Count completion tokens
+    completion_tokens = len(full_response.split())
+    if req_metrics:
+        req_metrics.record_token(completion_tokens)
     
     # Format response
     return ChatCompletionResponse(
@@ -227,48 +251,71 @@ async def _stream_chat_completion(
     start_time: float
 ) -> AsyncGenerator[str, None]:
     """Generate a streaming chat completion (SSE format)."""
+    # Initialize metrics for streaming
+    req_metrics = RequestMetrics(model=body.model, stream=True)
+    req_metrics.start()
+    first_token = True
+    token_count = 0
+    
     # Get the last user message
     user_messages = [msg for msg in body.messages if msg.role == "user"]
     if not user_messages:
         yield f"data: {json.dumps({'error': 'No user messages found'})}\n\n"
+        req_metrics.finish("error")
         return
     
     prompt = user_messages[-1].content
+    req_metrics.record_prompt_tokens(len(prompt.split()))
     
-    # Stream response using echo worker
-    async for chunk in worker.generate_stream(prompt, max_tokens=body.max_tokens or 100):
-        chunk_data = ChatCompletionChunk(
+    try:
+        # Stream response using worker
+        async for chunk in worker.generate_stream(prompt, max_tokens=body.max_tokens or 100):
+            # Record TTFB on first token
+            if first_token:
+                req_metrics.record_first_token()
+                first_token = False
+            
+            token_count += 1
+            chunk_data = ChatCompletionChunk(
+                id=request_id,
+                created=int(start_time),
+                model=body.model,
+                choices=[{
+                    "index": 0,
+                    "delta": {"role": "assistant", "content": chunk},
+                    "finish_reason": None
+                }]
+            )
+            yield f"data: {chunk_data.model_dump_json()}\n\n"
+            await asyncio.sleep(0.01)  # Small delay to simulate token generation
+        
+        # Send final chunk
+        final_chunk = ChatCompletionChunk(
             id=request_id,
             created=int(start_time),
             model=body.model,
             choices=[{
                 "index": 0,
-                "delta": {"role": "assistant", "content": chunk},
-                "finish_reason": None
+                "delta": {},
+                "finish_reason": "stop"
             }]
         )
-        yield f"data: {chunk_data.model_dump_json()}\n\n"
-        await asyncio.sleep(0.01)  # Small delay to simulate token generation
+        yield f"data: {final_chunk.model_dump_json()}\n\n"
+        yield "data: [DONE]\n\n"
+        
+        # Log and record metrics
+        latency_ms = int((time.time() - start_time) * 1000)
+        log_response(logger, request_id, latency_ms, "success")
+        req_metrics.record_token(token_count)
+        req_metrics.finish("success")
+        
+    except Exception as e:
+        req_metrics.finish("error")
+        # Optionally re-raise or log the exception
+        # yield f"data: {json.dumps({'error': str(e)})}\n\n" # If you want to send error to client
+        raise # Re-raise to ensure it's logged by the server if not handled elsewhere
     
-    # Send final chunk
-    final_chunk = ChatCompletionChunk(
-        id=request_id,
-        created=int(start_time),
-        model=body.model,
-        choices=[{
-            "index": 0,
-            "delta": {},
-            "finish_reason": "stop"
-        }]
-    )
-    yield f"data: {final_chunk.model_dump_json()}\n\n"
-    yield "data: [DONE]\n\n"
-    
-    # Log response
-    latency_ms = int((time.time() - start_time) * 1000)
-    log_response(logger, request_id, latency_ms, "success")
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

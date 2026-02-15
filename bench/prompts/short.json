@@ -1,0 +1,17 @@
+{
+    "name": "short",
+    "description": "Short prompts (~20 tokens) for measuring TTFB and overhead",
+    "prompts": [
+        "What is 2 + 2?",
+        "Hello, how are you?",
+        "What is the capital of France?",
+        "Tell me a joke.",
+        "What color is the sky?",
+        "What is Python?",
+        "How many days in a week?",
+        "What is AI?",
+        "Name three fruits.",
+        "What year is it?"
+    ],
+    "max_tokens": 50
+}

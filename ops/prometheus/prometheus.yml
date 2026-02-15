@@ -1,0 +1,52 @@
+# Prometheus Configuration
+# 
+# This scrapes metrics from the gateway and vLLM.
+# Metrics are available at:
+#   - Gateway: http://gateway:8000/metrics
+#   - vLLM: http://vllm:8000/metrics (vLLM exposes Prometheus metrics by default)
+
+global:
+  scrape_interval: 15s      # How often to scrape targets
+  evaluation_interval: 15s  # How often to evaluate rules
+
+# Alertmanager configuration (optional, for alerts)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: []
+
+scrape_configs:
+  # Gateway metrics
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:8000']
+    metrics_path: /metrics
+
+  # vLLM metrics (vLLM exports Prometheus metrics natively)
+  - job_name: 'vllm'
+    static_configs:
+      - targets: ['vllm:8000']
+    metrics_path: /metrics
+
+  # TGI metrics (when running with --profile tgi)
+  - job_name: 'tgi'
+    static_configs:
+      - targets: ['tgi:8000']
+    metrics_path: /metrics
+
+  # TGI Tensor Parallel metrics (when running with --profile tgi-tp)
+  - job_name: 'tgi-tp'
+    static_configs:
+      - targets: ['tgi-tp:8000']
+    metrics_path: /metrics
+
+  # TensorRT-LLM metrics (when running with --profile trt)
+  - job_name: 'trt'
+    static_configs:
+      - targets: ['trt:8000']
+    metrics_path: /metrics
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

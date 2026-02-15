@@ -1,0 +1,12 @@
+{
+    "name": "long",
+    "description": "Long prompts (~500 tokens) with multi-turn conversation",
+    "prompts": [
+        "I'm building a web application and need help. Here's my situation: I have a React frontend, a FastAPI backend, and a PostgreSQL database. Users can create accounts, post content, and interact with each other. The app is currently experiencing slow load times on the main feed page which shows the latest 50 posts with user information and engagement metrics. What are some strategies I could use to optimize this? Consider caching, database queries, frontend rendering, and API design.",
+        "You are a senior software engineer conducting a code review. Here's a Python function that processes user data. Please analyze it for potential issues including performance, security, error handling, and code quality: def process_users(users): results = []; for user in users: if user['age'] > 18: result = {'name': user['name'].upper(), 'email': user['email'], 'active': True}; results.append(result); return results. Provide detailed feedback and a refactored version.",
+        "I'm preparing for a machine learning interview and need help understanding the following concepts in depth: 1) The bias-variance tradeoff and how it affects model selection, 2) The difference between L1 and L2 regularization and when to use each, 3) How gradient descent works and its variants like SGD, Adam, and RMSprop. Please explain each concept with examples and mathematical intuition where appropriate.",
+        "Write a detailed technical specification for a real-time chat application. The system should support: 1) One-on-one messaging, 2) Group chats up to 100 members, 3) Message persistence, 4) Online/offline status, 5) Read receipts, 6) File sharing up to 10MB. Include the architecture, technology choices, API endpoints, database schema, and scalability considerations.",
+        "Explain the history, architecture, and impact of transformer models in natural language processing. Start from the attention mechanism introduced in the 'Attention is All You Need' paper, discuss how BERT and GPT evolved from this foundation, and explain the key innovations that enabled large language models like GPT-4 and Claude. Include technical details about self-attention, positional encoding, and the training process."
+    ],
+    "max_tokens": 500
+}

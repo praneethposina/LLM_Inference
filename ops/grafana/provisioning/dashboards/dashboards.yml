@@ -1,0 +1,14 @@
+# Grafana Dashboard Provisioning
+# Auto-loads dashboards from the dashboards folder
+
+apiVersion: 1
+
+providers:
+  - name: 'LLM Inference'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

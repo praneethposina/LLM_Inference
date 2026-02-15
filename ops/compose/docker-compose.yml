@@ -1,8 +1,14 @@
 # LLM Inference Stack - Docker Compose
 #
 # This brings up the complete inference stack:
-#   - gateway: OpenAI-compatible API (port 8000)
-#   - vllm: LLM inference engine (internal port 8001)
+#   - gateway:    OpenAI-compatible API       (port 8000)
+#   - vllm:       LLM inference engine        (port 8001)
+#   - vllm-quant: AWQ quantized vLLM          (port 8002, --profile quant)
+#   - tgi:        HuggingFace TGI, 1 GPU      (port 8003, --profile tgi)
+#   - tgi-tp:     TGI tensor parallel, 2 GPU  (port 8004, --profile tgi-tp)
+#   - trt:        TensorRT-LLM, FP8/graphs    (port 8005, --profile trt)
+#   - prometheus: Metrics collection           (port 9090)
+#   - grafana:    Metrics visualization        (port 3030)
 #
 # Usage:
 #   docker compose up              # Start with default model (Mistral 7B)
@@ -20,11 +26,9 @@ services:
   # ===========================================================================
   # vLLM - LLM Inference Engine
   # ===========================================================================
-  # Uses the official vLLM OpenAI-compatible image directly
   vllm:
     image: vllm/vllm-openai:latest
     container_name: llm-vllm
-    # Override the default command with explicit model and args
     command:
       - "--model"
       - "${MODEL:-mistralai/Mistral-7B-Instruct-v0.3}"
@@ -59,7 +63,175 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 180s # Models take time to load
+      start_period: 180s
+    restart: unless-stopped
+
+  # ===========================================================================
+  # vLLM Quantized - 4-bit AWQ for comparison (M3 experiments)
+  # ===========================================================================
+  vllm-quant:
+    image: vllm/vllm-openai:latest
+    container_name: llm-vllm-quant
+    profiles:
+      - quant # Only starts with: docker compose --profile quant up
+    command:
+      - "--model"
+      - "TheBloke/Mistral-7B-Instruct-v0.2-AWQ"
+      - "--max-model-len"
+      - "${MAX_MODEL_LEN:-8192}"
+      - "--gpu-memory-utilization"
+      - "0.90"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--quantization"
+      - "awq"
+      - "--trust-remote-code"
+    environment:
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    ports:
+      - "8002:8000"
+    networks:
+      - llm-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
+
+  # ===========================================================================
+  # TGI - HuggingFace Text Generation Inference (M3 Phase B)
+  # ===========================================================================
+  tgi:
+    image: ghcr.io/huggingface/text-generation-inference:latest
+    container_name: llm-tgi
+    profiles:
+      - tgi # Start with: docker compose --profile tgi up
+    command:
+      - "--model-id"
+      - "${MODEL:-mistralai/Mistral-7B-Instruct-v0.3}"
+      - "--max-input-tokens"
+      - "4096"
+      - "--max-total-tokens"
+      - "${MAX_MODEL_LEN:-8192}"
+      - "--port"
+      - "8000"
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN:-}
+    volumes:
+      - huggingface_cache:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    ports:
+      - "8003:8000"
+    networks:
+      - llm-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
+
+  # ===========================================================================
+  # TGI Tensor Parallel - 2 GPU split (M3 Phase B)
+  # ===========================================================================
+  tgi-tp:
+    image: ghcr.io/huggingface/text-generation-inference:latest
+    container_name: llm-tgi-tp
+    profiles:
+      - tgi-tp # Start with: docker compose --profile tgi-tp up
+    command:
+      - "--model-id"
+      - "${MODEL:-mistralai/Mistral-7B-Instruct-v0.3}"
+      - "--max-input-tokens"
+      - "4096"
+      - "--max-total-tokens"
+      - "${MAX_MODEL_LEN:-8192}"
+      - "--num-shard"
+      - "2"
+      - "--port"
+      - "8000"
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN:-}
+    volumes:
+      - huggingface_cache:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 2
+              capabilities: [ gpu ]
+    ports:
+      - "8004:8000"
+    networks:
+      - llm-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
+
+  # ===========================================================================
+  # TensorRT-LLM - NVIDIA optimized inference (M3 Phase C)
+  # Uses the TRT-LLM OpenAI-compatible server image.
+  # NOTE: Requires a pre-built TRT-LLM engine. See engines/trtllm/README.md
+  # ===========================================================================
+  trt:
+    image: nvidia/triton-trt-llm:latest
+    container_name: llm-trt
+    profiles:
+      - trt # Start with: docker compose --profile trt up
+    command:
+      - "--model_repo"
+      - "/engines"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+    environment:
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+      - ../../engines/trtllm/engines:/engines
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    ports:
+      - "8005:8000"
+    networks:
+      - llm-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s # TRT-LLM engine loading takes longer
     restart: unless-stopped
 
   # ===========================================================================
@@ -91,6 +263,46 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+  # ===========================================================================
+  # Prometheus - Metrics Collection
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: llm-prometheus
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - llm-network
+    restart: unless-stopped
+
+  # ===========================================================================
+  # Grafana - Metrics Visualization
+  # ===========================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: llm-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=llminference
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3030:3000"
+    networks:
+      - llm-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 networks:
   llm-network:
     driver: bridge
@@ -101,3 +313,7 @@ volumes:
     name: llm-hf-cache
   gateway_logs:
     name: llm-gateway-logs
+  prometheus_data:
+    name: llm-prometheus-data
+  grafana_data:
+    name: llm-grafana-data

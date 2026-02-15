@@ -173,3 +173,24 @@ curl http://localhost:8001/health
 | `docker compose logs -f vllm` | Watch vLLM logs |
 | `docker compose logs -f gateway` | Watch gateway logs |
 | `nvidia-smi` | Check GPU usage |
+
+```bash
+# On Lightning.ai - sync new files:
+cd ~/LLM_Inference
+git pull  # or rsync from local
+
+# Start full stack with monitoring:
+cd ops/compose
+docker compose up -d
+
+# Access:
+# - Gateway: http://localhost:8000
+# - Prometheus: http://localhost:9090
+# - Grafana: http://localhost:3030 (admin/llminference)
+```
+
+```bash
+cd ~/LLM_Inference/bench
+pip install httpx
+python benchmark.py --url http://localhost:8000 --suite all --output results.csv
+```
