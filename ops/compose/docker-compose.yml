@@ -45,6 +45,7 @@ services:
       - "--trust-remote-code"
     environment:
       - HF_HOME=/root/.cache/huggingface
+      - CUDA_VISIBLE_DEVICES=0
     volumes:
       - huggingface_cache:/root/.cache/huggingface
     deploy:
@@ -90,6 +91,7 @@ services:
       - "--trust-remote-code"
     environment:
       - HF_HOME=/root/.cache/huggingface
+      - CUDA_VISIBLE_DEVICES=1
     volumes:
       - huggingface_cache:/root/.cache/huggingface
     deploy:
