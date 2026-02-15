@@ -7,7 +7,7 @@
     "graphTooltip": 0,
     "id": null,
     "links": [],
-    "liveNow": false,
+    "liveNow": true,
     "panels": [
         {
             "datasource": {
@@ -17,9 +17,8 @@
             "fieldConfig": {
                 "defaults": {
                     "color": {
-                        "mode": "palette-classic"
+                        "mode": "thresholds"
                     },
-                    "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -41,17 +40,15 @@
                 }
             },
             "gridPos": {
-                "h": 8,
-                "w": 8,
+                "h": 6,
+                "w": 6,
                 "x": 0,
                 "y": 0
             },
             "id": 1,
             "options": {
                 "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
+                "graphMode": "none",
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
@@ -61,15 +58,15 @@
                 },
                 "textMode": "auto"
             },
-            "pluginVersion": "10.0.0",
             "targets": [
                 {
-                    "expr": "histogram_quantile(0.50, sum(rate(llm_request_latency_seconds_bucket[5m])) by (le))",
-                    "legendFormat": "p50",
+                    "expr": "llm_request_latency_seconds_sum / llm_request_latency_seconds_count",
+                    "legendFormat": "{{model}}",
+                    "instant": true,
                     "refId": "A"
                 }
             ],
-            "title": "Request Latency (p50)",
+            "title": "Avg Latency (all time)",
             "type": "stat"
         },
         {
@@ -80,9 +77,8 @@
             "fieldConfig": {
                 "defaults": {
                     "color": {
-                        "mode": "palette-classic"
+                        "mode": "thresholds"
                     },
-                    "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
@@ -92,11 +88,11 @@
                             },
                             {
                                 "color": "yellow",
-                                "value": 2
+                                "value": 0.1
                             },
                             {
                                 "color": "red",
-                                "value": 10
+                                "value": 0.5
                             }
                         ]
                     },
@@ -104,17 +100,15 @@
                 }
             },
             "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 8,
+                "h": 6,
+                "w": 6,
+                "x": 6,
                 "y": 0
             },
             "id": 2,
             "options": {
                 "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
+                "graphMode": "none",
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
@@ -126,12 +120,13 @@
             },
             "targets": [
                 {
-                    "expr": "histogram_quantile(0.95, sum(rate(llm_request_latency_seconds_bucket[5m])) by (le))",
-                    "legendFormat": "p95",
+                    "expr": "llm_ttfb_seconds_sum / llm_ttfb_seconds_count",
+                    "legendFormat": "{{model}}",
+                    "instant": true,
                     "refId": "A"
                 }
             ],
-            "title": "Request Latency (p95)",
+            "title": "Avg TTFB (all time)",
             "type": "stat"
         },
         {
@@ -142,41 +137,30 @@
             "fieldConfig": {
                 "defaults": {
                     "color": {
-                        "mode": "palette-classic"
+                        "mode": "thresholds"
                     },
-                    "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
+                                "color": "blue",
                                 "value": null
-                            },
-                            {
-                                "color": "yellow",
-                                "value": 0.5
-                            },
-                            {
-                                "color": "red",
-                                "value": 2
                             }
                         ]
                     },
-                    "unit": "s"
+                    "unit": "short"
                 }
             },
             "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 16,
+                "h": 6,
+                "w": 6,
+                "x": 12,
                 "y": 0
             },
             "id": 3,
             "options": {
                 "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
+                "graphMode": "none",
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
@@ -188,262 +172,9 @@
             },
             "targets": [
                 {
-                    "expr": "histogram_quantile(0.50, sum(rate(llm_ttfb_seconds_bucket[5m])) by (le))",
-                    "legendFormat": "TTFB p50",
-                    "refId": "A"
-                }
-            ],
-            "title": "Time to First Byte (p50)",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "drawStyle": "line",
-                        "fillOpacity": 10,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "unit": "reqps"
-                }
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 0,
-                "y": 8
-            },
-            "id": 4,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "targets": [
-                {
-                    "expr": "sum(rate(llm_requests_total[1m]))",
-                    "legendFormat": "Requests/sec",
-                    "refId": "A"
-                }
-            ],
-            "title": "Request Throughput",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "drawStyle": "line",
-                        "fillOpacity": 10,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "unit": "short"
-                }
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 8
-            },
-            "id": 5,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "targets": [
-                {
-                    "expr": "sum(rate(llm_tokens_generated_total[1m]))",
-                    "legendFormat": "Tokens/sec",
-                    "refId": "A"
-                }
-            ],
-            "title": "Token Generation Rate",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            }
-                        ]
-                    },
-                    "unit": "short"
-                }
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 0,
-                "y": 16
-            },
-            "id": 6,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "textMode": "auto"
-            },
-            "targets": [
-                {
-                    "expr": "sum(llm_active_requests)",
-                    "legendFormat": "Active",
-                    "refId": "A"
-                }
-            ],
-            "title": "Active Requests",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            }
-                        ]
-                    },
-                    "unit": "short"
-                }
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 8,
-                "y": 16
-            },
-            "id": 7,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "textMode": "auto"
-            },
-            "targets": [
-                {
-                    "expr": "sum(llm_requests_total)",
-                    "legendFormat": "Total",
+                    "expr": "sum(llm_requests_total) by (model)",
+                    "legendFormat": "{{model}}",
+                    "instant": true,
                     "refId": "A"
                 }
             ],
@@ -458,14 +189,13 @@
             "fieldConfig": {
                 "defaults": {
                     "color": {
-                        "mode": "palette-classic"
+                        "mode": "thresholds"
                     },
-                    "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
+                                "color": "purple",
                                 "value": null
                             }
                         ]
@@ -474,17 +204,15 @@
                 }
             },
             "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 16,
-                "y": 16
+                "h": 6,
+                "w": 6,
+                "x": 18,
+                "y": 0
             },
-            "id": 8,
+            "id": 4,
             "options": {
                 "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
+                "graphMode": "none",
                 "reduceOptions": {
                     "calcs": [
                         "lastNotNull"
@@ -496,13 +224,268 @@
             },
             "targets": [
                 {
-                    "expr": "sum(llm_tokens_generated_total)",
-                    "legendFormat": "Total",
+                    "expr": "sum(llm_tokens_generated_total) by (model)",
+                    "legendFormat": "{{model}}",
+                    "instant": true,
                     "refId": "A"
                 }
             ],
-            "title": "Total Tokens Generated",
+            "title": "Total Tokens",
             "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 20,
+                        "lineWidth": 2,
+                        "pointSize": 5,
+                        "showPoints": "auto",
+                        "spanNulls": true
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 6
+            },
+            "id": 5,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(llm_requests_total[5m])) by (model)",
+                    "legendFormat": "{{model}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Request Rate (req/s)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 20,
+                        "lineWidth": 2,
+                        "pointSize": 5,
+                        "showPoints": "auto",
+                        "spanNulls": true
+                    },
+                    "unit": "short"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 6
+            },
+            "id": 6,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(llm_tokens_generated_total[5m])) by (model)",
+                    "legendFormat": "{{model}} tok/s",
+                    "refId": "A"
+                }
+            ],
+            "title": "Token Generation Rate (tok/s)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 2,
+                        "pointSize": 5,
+                        "showPoints": "auto",
+                        "spanNulls": true
+                    },
+                    "unit": "s"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 14
+            },
+            "id": 7,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.50, sum(rate(llm_request_latency_seconds_bucket[5m])) by (le, model))",
+                    "legendFormat": "{{model}} p50",
+                    "refId": "A"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(llm_request_latency_seconds_bucket[5m])) by (le, model))",
+                    "legendFormat": "{{model}} p95",
+                    "refId": "B"
+                }
+            ],
+            "title": "Request Latency (p50 / p95)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 2,
+                        "pointSize": 5,
+                        "showPoints": "auto",
+                        "spanNulls": true
+                    },
+                    "unit": "s"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 14
+            },
+            "id": 8,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.50, sum(rate(llm_ttfb_seconds_bucket[5m])) by (le, model))",
+                    "legendFormat": "{{model}} p50",
+                    "refId": "A"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(llm_ttfb_seconds_bucket[5m])) by (le, model))",
+                    "legendFormat": "{{model}} p95",
+                    "refId": "B"
+                }
+            ],
+            "title": "Time to First Byte (p50 / p95)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 2,
+                        "showPoints": "auto",
+                        "spanNulls": true
+                    },
+                    "unit": "short"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 22
+            },
+            "id": 9,
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "llm_active_requests",
+                    "legendFormat": "{{model}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Active Requests",
+            "type": "timeseries"
         }
     ],
     "refresh": "5s",
@@ -516,13 +499,13 @@
         "list": []
     },
     "time": {
-        "from": "now-15m",
+        "from": "now-1h",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "",
     "title": "LLM Inference Dashboard",
     "uid": "llm-inference",
-    "version": 1,
+    "version": 2,
     "weekStart": ""
 }
