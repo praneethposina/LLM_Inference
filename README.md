@@ -47,7 +47,7 @@ A comprehensive LLM inference service built from the top down, starting with pac
 | TGI (1 GPU) | `8003` | `--profile tgi` | HuggingFace TGI |
 | TGI-TP (2 GPU) | `8004` | `--profile tgi-tp` | HuggingFace TGI |
 | TRT-LLM | `8005` | `--profile trt` | TensorRT-LLM |
-| Prometheus | `9090` | default | — |
+| Prometheus | `9292` | default | — |
 | Grafana | `3030` | default | — |
 
 ## Quick Start

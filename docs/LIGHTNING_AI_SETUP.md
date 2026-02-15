@@ -74,9 +74,14 @@ cd ops/compose
 # 1. Build the gateway container
 # 2. Pull vLLM container
 # 3. Download Mistral 7B model (~14GB, takes 2-5 min first time)
-docker compose up
+docker compose up -d
 
 # Watch for "Model loaded" in vLLM logs
+docker compose logs -f vllm
+
+# Optional: Start additional M3 experiment services
+docker compose --profile quant up -d vllm-quant   # AWQ 4-bit quant (GPU 1)
+docker compose --profile tgi up -d tgi             # HuggingFace TGI
 ```
 
 **First run takes ~5-10 minutes** (downloading model). Subsequent runs are fast.
@@ -185,7 +190,7 @@ docker compose up -d
 
 # Access:
 # - Gateway: http://localhost:8000
-# - Prometheus: http://localhost:9090
+# - Prometheus: http://localhost:9292
 # - Grafana: http://localhost:3030 (admin/llminference)
 ```
 

@@ -10,7 +10,7 @@
 │     │                               │      │     │                            │
 │  Next.js ──→ localhost:8080 ────────┼──SSH─┼──→ :8000 ──→ vLLM → GPU (A100)   │
 │  (frontend)  (tunnel)               │      │                                  │
-│                                     │      │  Prometheus   → :9090            │
+│                                     │      │  Prometheus   → :9292            │
 │  curl ─────→ localhost:8080 ────────┼──SSH─┼──→ :8000                         │
 │                                     │      │  Grafana      → :3030            │
 └─────────────────────────────────────┘      └──────────────────────────────────┘
@@ -97,14 +97,14 @@ If you want access to Prometheus or Grafana locally too:
 ```bash
 # All-in-one tunnel (Gateway + Prometheus + Grafana)
 ssh -L 8080:localhost:8000 \
-    -L 9090:localhost:9090 \
+    -L 9292:localhost:9292 \
     -L 3030:localhost:3030 \
     s_01ke5v1ghk5yz3c74668bdx3b6@ssh.lightning.ai
 ```
 
 Then:
 - `localhost:8080` → Gateway API
-- `localhost:9090` → Prometheus
+- `localhost:9292` → Prometheus
 - `localhost:3030` → Grafana (login: admin / llminference)
 
 ---
@@ -301,7 +301,7 @@ The Gateway allows `localhost:3000` and `localhost:3001`. If your frontend runs 
 |------|-----|
 | Playground | http://localhost:3000 |
 | Gateway API | http://localhost:8080 |
-| Prometheus | http://localhost:9090 (needs tunnel) |
+| Prometheus | http://localhost:9292 (needs tunnel) |
 | Grafana | http://localhost:3030 (needs tunnel) |
 
 ### API Key

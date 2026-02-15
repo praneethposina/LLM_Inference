@@ -26,6 +26,7 @@ python benchmark.py --concurrency 10  # Parallel (vLLM batches these)
 | `short` | 10 | 50 | TTFB and overhead testing |
 | `medium` | 10 | 200 | Typical use case |
 | `long` | 5 | 500 | Stress testing, long context |
+| `stress` | 5 | 1000 | Paged KV cache stress (extra-long prompts) |
 
 ## Metrics Collected
 
